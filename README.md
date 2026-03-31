@@ -56,6 +56,13 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
+## Windows Batch Launchers
+
+- `install_dependencies.bat`
+  Installs all Python dependencies and keeps the terminal open so you can read any errors.
+- `start_sentinel_file_finder.bat`
+  Starts the desktop application without the usual console flash by relaunching itself hidden.
+
 ## Build Windows Executable
 
 ```powershell
