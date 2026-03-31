@@ -34,6 +34,7 @@ See:
 ## Features
 
 - Natural-language-style file search
+- Wildcard filename pattern search across all indexed file types
 - Semantic relevance scoring
 - Keyword and fuzzy matching blended into ranking
 - Search across filename, full path, and extracted content
@@ -48,6 +49,19 @@ See:
 - CSV export
 - Open file
 - Open containing folder
+
+## Wildcard Query Syntax
+
+- `**sample`
+  Finds files whose filename stem ends with `sample`, across all indexed file types.
+- `sample**`
+  Finds files whose filename stem starts with `sample`, across all indexed file types.
+- `**sample**`
+  Finds files whose filename stem contains `sample`, across all indexed file types.
+- `**sample**.pdf`
+  Applies the same wildcard filename match, but only for `.pdf` files.
+
+These wildcard patterns are deterministic filename searches. Regular queries without this syntax still use the blended AI-style ranking across filename, path, and extracted content.
 
 ## Setup
 

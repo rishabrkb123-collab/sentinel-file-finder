@@ -119,9 +119,10 @@ class MainWindow(QMainWindow):
         group = QGroupBox("AI Search")
         layout = QVBoxLayout(group)
         self.query_input = QLineEdit()
-        self.query_input.setPlaceholderText("Describe filename, content, project, topic, or phrase")
+        self.query_input.setPlaceholderText("Describe file or use patterns like **sample, sample**, **sample**, **sample**.pdf")
         self.query_input.returnPressed.connect(self._run_search)
         layout.addWidget(self.query_input)
+        layout.addWidget(QLabel("Wildcard filename patterns: **sample = ends with, sample** = starts with, **sample** = contains"))
 
         row = QHBoxLayout()
         search_button = QPushButton("Search")

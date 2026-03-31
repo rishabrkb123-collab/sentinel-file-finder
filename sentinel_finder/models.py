@@ -6,6 +6,13 @@ from pathlib import Path
 
 
 @dataclass(slots=True)
+class NamePattern:
+    text: str = ""
+    mode: str = ""
+    raw: str = ""
+
+
+@dataclass(slots=True)
 class SearchFilters:
     query: str = ""
     extension: str = ""
@@ -17,6 +24,7 @@ class SearchFilters:
     modified_before: datetime | None = None
     content_only: bool = False
     limit: int = 200
+    name_pattern: NamePattern | None = None
 
 
 @dataclass(slots=True)

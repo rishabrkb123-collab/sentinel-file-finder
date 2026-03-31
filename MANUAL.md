@@ -34,6 +34,19 @@ python app.py
 - `Only files with extracted content`
 - `Result Limit`
 
+## Wildcard Filename Search
+
+- `**sample`
+  Match filenames that end with `sample`
+- `sample**`
+  Match filenames that start with `sample`
+- `**sample**`
+  Match filenames that contain `sample`
+- `**sample**.pdf`
+  Match filenames that contain `sample` and only return `.pdf` files
+
+These wildcard queries work across all indexed file types because they match on the indexed filename itself, not only text-extracted documents.
+
 ## Supported Content Extraction
 
 - Plain text and source files
