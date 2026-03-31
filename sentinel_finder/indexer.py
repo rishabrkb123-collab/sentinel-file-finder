@@ -67,35 +67,37 @@ class FileIndexer:
             root_path = Path(root)
             if not root_path.exists():
                 continue
-            for file_path in root_path.rglob("*"):
-                if not file_path.is_file():
-                    continue
-                scanned += 1
-                if progress and scanned % 50 == 0:
-                    progress(f"Scanning {scanned} files... latest: {file_path}")
-                try:
-                    stat = file_path.stat()
-                except OSError:
-                    continue
+            for dirpath, _dirnames, filenames in os.walk(root_path, followlinks=False):
+                for fname in filenames:
+                    file_path = Path(dirpath) / fname
+                    if not file_path.is_file():
+                        continue
+                    scanned += 1
+                    if progress and scanned % 50 == 0:
+                        progress(f"Scanning {scanned} files... latest: {file_path}")
+                    try:
+                        stat = file_path.stat()
+                    except OSError:
+                        continue
 
-                content = extract_text(file_path)
-                excerpt = content[:200]
-                indexed_rows.append(
-                    (
-                        str(file_path),
-                        file_path.name,
-                        file_path.suffix.lower(),
-                        classify_file_type(file_path),
-                        stat.st_size,
-                        stat.st_mtime,
-                        stat.st_ctime,
-                        content,
-                        excerpt,
-                        now,
+                    content = extract_text(file_path)
+                    excerpt = content[:200]
+                    indexed_rows.append(
+                        (
+                            str(file_path),
+                            file_path.name,
+                            file_path.suffix.lower(),
+                            classify_file_type(file_path),
+                            stat.st_size,
+                            stat.st_mtime,
+                            stat.st_ctime,
+                            content,
+                            excerpt,
+                            now,
+                        )
                     )
-                )
-                documents.append(f"{file_path.name}\n{file_path.parent}\n{content}")
-                doc_paths.append(str(file_path))
+                    documents.append(f"{file_path.name}\n{file_path.parent}\n{content}")
+                    doc_paths.append(str(file_path))
 
         temp_model_path = self.model_path.with_suffix(".joblib.tmp")
         try:

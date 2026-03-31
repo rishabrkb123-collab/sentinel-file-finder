@@ -381,7 +381,8 @@ class MainWindow(QMainWindow):
         with open(target, "w", encoding="utf-8", newline="") as handle:
             writer = csv.DictWriter(
                 handle,
-                fieldnames=["score", "name", "extension", "file_type", "size_bytes", "modified_ts", "path", "content_excerpt"],
+                fieldnames=["score", "name", "extension", "file_type", "size_bytes", "modified_ts", "created_ts", "path", "content_excerpt"],
+                extrasaction="ignore",
             )
             writer.writeheader()
             writer.writerows(self.results)

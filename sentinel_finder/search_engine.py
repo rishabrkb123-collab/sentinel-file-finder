@@ -53,8 +53,14 @@ class SearchEngine:
             sql.append("AND file_type = ?")
             params.append(parsed_filters.file_type)
         if parsed_filters.path_contains:
-            sql.append("AND path LIKE ?")
-            params.append(f"%{parsed_filters.path_contains}%")
+            escaped = (
+                parsed_filters.path_contains
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
+            )
+            sql.append("AND path LIKE ? ESCAPE '\\'")
+            params.append(f"%{escaped}%")
         if parsed_filters.min_size_mb is not None:
             sql.append("AND size_bytes >= ?")
             params.append(int(parsed_filters.min_size_mb * 1024 * 1024))
@@ -149,13 +155,12 @@ class SearchEngine:
     def _matches_name_pattern(self, record: FileRecord, pattern: NamePattern) -> bool:
         filename = record.name.lower()
         stem = filename[: -len(record.extension)] if record.extension and filename.endswith(record.extension) else filename
-        value = stem.lower()
         if pattern.mode == "startswith":
-            return value.startswith(pattern.text)
+            return stem.startswith(pattern.text)
         if pattern.mode == "endswith":
-            return value.endswith(pattern.text)
+            return stem.endswith(pattern.text)
         if pattern.mode == "contains":
-            return pattern.text in value
+            return pattern.text in stem
         return False
 
     def _score_results(
