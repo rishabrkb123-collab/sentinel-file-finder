@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+build/
+dist/
+*.spec
+index_store/
+*.db
+*.sqlite3
+.pytest_cache/
+.mypy_cache/
+.idea/
+.vscode/
+smoke_test_data/
