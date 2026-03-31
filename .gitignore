@@ -6,8 +6,10 @@ __pycache__/
 venv/
 build/
 dist/
+release/
 *.spec
 index_store/
+logs/
 *.db
 *.sqlite3
 .pytest_cache/
@@ -15,5 +17,7 @@ index_store/
 .idea/
 .vscode/
 smoke_test_data/
-logs/
 pattern_test_data/
+audit_test_data/
+atomicity_test_data/
+test_artifacts/

@@ -73,9 +73,9 @@ python app.py
 ## Windows Batch Launchers
 
 - `install_dependencies.bat`
-  Installs all Python dependencies and keeps the terminal open so you can read any errors.
+  Creates `.venv`, installs all Python dependencies into it, and keeps the terminal open so you can read any errors.
 - `start_sentinel_file_finder.bat`
-  Starts the desktop application without the usual console flash by relaunching itself hidden.
+  Starts the desktop application without the usual console flash by relaunching itself hidden. It prefers the local `.venv` project runtime so source changes are picked up immediately, and only falls back to the packaged `.exe` if Python is unavailable.
 
 ## Build Windows Executable
 
@@ -83,7 +83,9 @@ python app.py
 .\build_exe.ps1
 ```
 
-The packaged app will be placed in `dist\SentinelFileFinder\`.
+The packaged app will be placed in `release\SentinelFileFinder\`.
+
+When packaged, runtime index and log files are stored under `%LOCALAPPDATA%\SentinelFileFinder` so rebuilds do not interfere with the packaged output folder.
 
 ## Notes
 

@@ -43,16 +43,20 @@ class WorkerSignals(QObject):
 
 
 class Worker(QRunnable):
-    def __init__(self, fn, *args, **kwargs) -> None:
+    def __init__(self, fn, *args, with_progress: bool = False, **kwargs) -> None:
         super().__init__()
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
+        self.with_progress = with_progress
         self.signals = WorkerSignals()
 
     def run(self) -> None:
         try:
-            result = self.fn(*self.args, progress=self.signals.progress.emit, **self.kwargs)
+            if self.with_progress:
+                result = self.fn(*self.args, progress=self.signals.progress.emit, **self.kwargs)
+            else:
+                result = self.fn(*self.args, **self.kwargs)
             self.signals.finished.emit(result)
         except Exception as exc:
             self.signals.errored.emit(str(exc))
@@ -67,6 +71,7 @@ class MainWindow(QMainWindow):
         self.app_paths = app_paths
         self.thread_pool = QThreadPool.globalInstance()
         self.results: list[dict] = []
+        self.active_search_id = 0
         self._build_ui()
         self._load_roots()
         self.statusBar().showMessage("Ready")
@@ -125,12 +130,12 @@ class MainWindow(QMainWindow):
         layout.addWidget(QLabel("Wildcard filename patterns: **sample = ends with, sample** = starts with, **sample** = contains"))
 
         row = QHBoxLayout()
-        search_button = QPushButton("Search")
-        search_button.clicked.connect(self._run_search)
-        clear_button = QPushButton("Clear")
-        clear_button.clicked.connect(self._clear_filters)
-        row.addWidget(search_button)
-        row.addWidget(clear_button)
+        self.search_button = QPushButton("Search")
+        self.search_button.clicked.connect(self._run_search)
+        self.clear_button = QPushButton("Clear")
+        self.clear_button.clicked.connect(self._clear_filters)
+        row.addWidget(self.search_button)
+        row.addWidget(self.clear_button)
         layout.addLayout(row)
         return group
 
@@ -243,7 +248,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "No folders", "Add at least one folder before indexing.")
             return
         self.index_button.setEnabled(False)
-        worker = Worker(self.indexer.rebuild_index, roots)
+        worker = Worker(self.indexer.rebuild_index, roots, with_progress=True)
         worker.signals.progress.connect(self.statusBar().showMessage)
         worker.signals.finished.connect(self._handle_index_complete)
         worker.signals.errored.connect(self._handle_error)
@@ -259,6 +264,8 @@ class MainWindow(QMainWindow):
 
     def _handle_error(self, message: str) -> None:
         self.index_button.setEnabled(True)
+        if hasattr(self, "search_button"):
+            self.search_button.setEnabled(True)
         QMessageBox.critical(self, "Operation failed", message)
         self.statusBar().showMessage(message)
 
@@ -268,7 +275,22 @@ class MainWindow(QMainWindow):
         except ValueError as exc:
             self._handle_error(str(exc))
             return
-        self.results = self.search_engine.search(filters)
+        self.active_search_id += 1
+        search_id = self.active_search_id
+        self.search_button.setEnabled(False)
+        self.results_table.setRowCount(0)
+        self.preview.clear()
+        self.statusBar().showMessage("Searching...")
+        worker = Worker(self.search_engine.search, filters)
+        worker.signals.finished.connect(lambda results, current_id=search_id: self._handle_search_complete(current_id, results))
+        worker.signals.errored.connect(self._handle_error)
+        self.thread_pool.start(worker)
+
+    def _handle_search_complete(self, search_id: int, results: list[dict]) -> None:
+        if search_id != self.active_search_id:
+            return
+        self.search_button.setEnabled(True)
+        self.results = results
         self._render_results()
         self.statusBar().showMessage(f"Found {len(self.results)} results.")
 
@@ -281,6 +303,10 @@ class MainWindow(QMainWindow):
         max_size = parse_float(self.max_size)
         after_date = self.modified_after.date().toPython() if self.use_modified_after.isChecked() else None
         before_date = self.modified_before.date().toPython() if self.use_modified_before.isChecked() else None
+        if min_size is not None and max_size is not None and min_size > max_size:
+            raise ValueError("Min Size (MB) cannot be greater than Max Size (MB).")
+        if after_date and before_date and after_date > before_date:
+            raise ValueError("Modified After cannot be later than Modified Before.")
 
         return SearchFilters(
             query=self.query_input.text().strip(),
@@ -377,6 +403,9 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Filters cleared.")
 
     def _open_docs_folder(self) -> None:
+        if not self.app_paths.docs_path.exists():
+            QMessageBox.warning(self, "Docs missing", f"Documentation folder not found:\n{self.app_paths.docs_path}")
+            return
         os.startfile(str(self.app_paths.docs_path))
 
 

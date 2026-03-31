@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from .config import MAX_CONTENT_BYTES, SNIPPET_CHARS, SUPPORTED_TEXT_EXTENSIONS
+
+logger = logging.getLogger(__name__)
 
 
 def extract_text(file_path: Path) -> str:
@@ -22,7 +25,8 @@ def extract_text(file_path: Path) -> str:
             return _extract_docx(file_path)
         if suffix == ".xlsx":
             return _extract_xlsx(file_path)
-    except Exception:
+    except Exception as exc:
+        logger.warning("Failed to extract text from %s: %s", file_path, exc)
         return ""
     return ""
 

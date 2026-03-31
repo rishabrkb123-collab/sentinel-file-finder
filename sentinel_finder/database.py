@@ -52,6 +52,25 @@ class IndexDatabase:
                 [(root,) for root in roots],
             )
 
+    def replace_files_and_roots(self, indexed_rows: list[tuple], roots: Iterable[str]) -> None:
+        with self.connect() as conn:
+            conn.execute("BEGIN")
+            conn.execute("DELETE FROM files")
+            conn.executemany(
+                """
+                INSERT INTO files(
+                    path, name, extension, file_type, size_bytes,
+                    modified_ts, created_ts, content_text, content_excerpt, indexed_ts
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                indexed_rows,
+            )
+            conn.execute("DELETE FROM indexed_roots")
+            conn.executemany(
+                "INSERT INTO indexed_roots(path) VALUES (?)",
+                [(root,) for root in roots],
+            )
+
     def load_roots(self) -> list[str]:
         with self.connect() as conn:
             rows = conn.execute("SELECT path FROM indexed_roots ORDER BY path").fetchall()

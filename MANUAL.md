@@ -63,7 +63,7 @@ These wildcard queries work across all indexed file types because they match on 
 .\build_exe.ps1
 ```
 
-This builds a Windows GUI application under `dist\SentinelFileFinder\`.
+This builds a Windows GUI application under `release\SentinelFileFinder\`.
 
 ## Limitations
 

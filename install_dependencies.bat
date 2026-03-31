@@ -18,8 +18,22 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [1/2] Upgrading pip...
-python -m pip install --upgrade pip
+if not exist ".venv" (
+    echo [1/3] Creating virtual environment...
+    python -m venv .venv
+    if errorlevel 1 (
+        echo.
+        echo [ERROR] Failed while creating the virtual environment.
+        echo.
+        pause
+        exit /b 1
+    )
+)
+
+set "VENV_PYTHON=%cd%\.venv\Scripts\python.exe"
+
+echo [2/3] Upgrading pip...
+"%VENV_PYTHON%" -m pip install --upgrade pip
 if errorlevel 1 (
     echo.
     echo [ERROR] Failed while upgrading pip.
@@ -29,8 +43,8 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/2] Installing requirements...
-python -m pip install -r requirements.txt
+echo [3/3] Installing requirements...
+"%VENV_PYTHON%" -m pip install -r requirements.txt
 if errorlevel 1 (
     echo.
     echo [ERROR] Failed while installing project dependencies.
@@ -41,8 +55,8 @@ if errorlevel 1 (
 
 echo.
 echo [SUCCESS] All dependencies are installed.
+echo Virtual environment: .venv
 echo You can now run start_sentinel_file_finder.bat
 echo.
 pause
 exit /b 0
-

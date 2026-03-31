@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from pathlib import Path
 from typing import Callable
@@ -96,23 +97,17 @@ class FileIndexer:
                 documents.append(f"{file_path.name}\n{file_path.parent}\n{content}")
                 doc_paths.append(str(file_path))
 
-        with self.database.connect() as conn:
-            conn.execute("DELETE FROM files")
-            conn.executemany(
-                """
-                INSERT INTO files(
-                    path, name, extension, file_type, size_bytes,
-                    modified_ts, created_ts, content_text, content_excerpt, indexed_ts
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                indexed_rows,
-            )
-
-        self.database.replace_roots(roots)
-        self._train_model(documents, doc_paths)
+        temp_model_path = self.model_path.with_suffix(".joblib.tmp")
+        try:
+            self._train_model(documents, doc_paths, temp_model_path)
+            self.database.replace_files_and_roots(indexed_rows, roots)
+            os.replace(temp_model_path, self.model_path)
+        finally:
+            if temp_model_path.exists():
+                temp_model_path.unlink()
         return scanned, len(indexed_rows)
 
-    def _train_model(self, documents: list[str], doc_paths: list[str]) -> None:
+    def _train_model(self, documents: list[str], doc_paths: list[str], target_path: Path) -> None:
         vectorizer = TfidfVectorizer(
             lowercase=True,
             stop_words="english",
@@ -126,5 +121,5 @@ class FileIndexer:
                 "matrix": matrix,
                 "doc_paths": doc_paths,
             },
-            self.model_path,
+            target_path,
         )
